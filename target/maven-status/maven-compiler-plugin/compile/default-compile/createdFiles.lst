@@ -1,4 +1,5 @@
 coursesimplified/api/dto/CourseNodeDto.class
+coursesimplified/cli/Command$MarkIncomplete.class
 coursesimplified/cli/CliRunner.class
 coursesimplified/api/dto/CourseEdgeDto.class
 coursesimplified/display/ConsoleTreeDisplay.class
@@ -16,6 +17,7 @@ coursesimplified/model/CourseGraph$CourseEdge.class
 coursesimplified/api/dto/CourseTreeResponseDto$EdgeWrapper.class
 coursesimplified/api/dto/CourseTreeResponseDto$NodeWrapper.class
 coursesimplified/api/dto/CourseTreeResponseDto.class
+coursesimplified/service/JsonCompletionService.class
 depen/Major.class
 coursesimplified/cli/Command$SelectMajor.class
 coursesimplified/api/dto/ProgramDto.class
@@ -25,9 +27,11 @@ coursesimplified/cli/Command$Unknown.class
 coursesimplified/api/HttpCourseApiClient.class
 coursesimplified/api/ApiException.class
 depen/Course.class
+coursesimplified/cli/Command$MarkComplete.class
 coursesimplified/archive/Scrapper.class
 coursesimplified/model/Major.class
 coursesimplified/api/dto/CourseDetailDto.class
+coursesimplified/service/JsonCompletionService$CompletionData.class
 coursesimplified/model/Course$Builder.class
 coursesimplified/display/CourseTreeDisplay.class
 coursesimplified/cli/Command.class

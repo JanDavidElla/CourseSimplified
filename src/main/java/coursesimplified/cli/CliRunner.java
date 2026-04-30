@@ -23,7 +23,7 @@ public class CliRunner {
         display.renderMessage("╔══════════════════════════════════════════════════════════╗");
         display.renderMessage("║              CourseSimplified — SJSU Planner             ║");
         display.renderMessage("╚══════════════════════════════════════════════════════════╝");
-        display.renderMessage("  Commands:  select cs | select swe | tree | help | quit");
+        display.renderMessage("  Commands:  select cs | select swe | tree | complete | help | quit");
         display.renderMessage("");
 
         boolean running = true;
@@ -40,6 +40,22 @@ public class CliRunner {
                     display.renderMessage("Type 'tree' to view the course tree.");
                 } catch (Exception e) {
                     display.renderError("Failed to load major: " + e.getMessage());
+                }
+            } else if (command instanceof Command.MarkComplete mc) {
+                if (service.getCurrentMajor() == null) {
+                    display.renderError("No major selected. Use 'select cs' or 'select swe' first.");
+                } else if (service.getCurrentMajor().getCourseGraph().getCourse(mc.courseCode()).isEmpty()) {
+                    display.renderError("Course '" + mc.courseCode() + "' not found in current major.");
+                } else {
+                    service.markCourseCompleted(mc.courseCode());
+                    display.renderMessage("✓ " + mc.courseCode() + " marked as completed and saved.");
+                }
+            } else if (command instanceof Command.MarkIncomplete mi) {
+                if (service.getCurrentMajor() == null) {
+                    display.renderError("No major selected. Use 'select cs' or 'select swe' first.");
+                } else {
+                    service.markCourseIncomplete(mi.courseCode());
+                    display.renderMessage("✗ " + mi.courseCode() + " marked as incomplete and saved.");
                 }
             } else if (command instanceof Command.ShowTree) {
                 Major current = service.getCurrentMajor();
@@ -62,16 +78,15 @@ public class CliRunner {
     private void printHelp() {
         display.renderMessage("");
         display.renderMessage("  Available commands:");
-        display.renderMessage("    select cs      — load Computer Science, BS");
-        display.renderMessage("    select swe     — load Software Engineering, BS");
-        display.renderMessage("    tree           — display the course prerequisite tree");
-        display.renderMessage("    help           — show this help");
-        display.renderMessage("    quit           — exit the program");
+        display.renderMessage("    select cs               — load Computer Science, BS");
+        display.renderMessage("    select swe              — load Software Engineering, BS");
+        display.renderMessage("    tree                    — display the course prerequisite tree");
+        display.renderMessage("    complete <code>         — mark a course as completed  (e.g. complete CS 46A)");
+        display.renderMessage("    uncomplete <code>       — mark a course as not completed");
+        display.renderMessage("    help                    — show this help");
+        display.renderMessage("    quit                    — exit the program");
         display.renderMessage("");
-        display.renderMessage("  Completion tracking:");
-        display.renderMessage("    Add course codes (one per line) to completed.txt");
-        display.renderMessage("    in the project root, then restart the app.");
-        display.renderMessage("    Example:  CS 46A");
+        display.renderMessage("  Changes are saved automatically to completed.json.");
         display.renderMessage("");
     }
 }

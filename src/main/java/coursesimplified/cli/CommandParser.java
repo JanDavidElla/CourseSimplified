@@ -28,6 +28,14 @@ public class CommandParser {
                 return new Command.Unknown(trimmed);
             }
         }
+        if (lower.startsWith("complete ")) {
+            String code = trimmed.substring(9).trim();
+            return code.isBlank() ? new Command.Unknown(trimmed) : new Command.MarkComplete(code);
+        }
+        if (lower.startsWith("uncomplete ")) {
+            String code = trimmed.substring(11).trim();
+            return code.isBlank() ? new Command.Unknown(trimmed) : new Command.MarkIncomplete(code);
+        }
 
         return new Command.Unknown(trimmed);
     }
