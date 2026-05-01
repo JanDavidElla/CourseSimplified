@@ -1,9 +1,12 @@
 package coursesimplified.cli;
 
 import coursesimplified.display.CourseTreeDisplay;
+import coursesimplified.model.Course;
+import coursesimplified.model.CourseStatus;
 import coursesimplified.model.Major;
 import coursesimplified.service.CourseTreeService;
 
+import java.util.Optional;
 import java.util.Scanner;
 
 public class CliRunner {
@@ -23,7 +26,7 @@ public class CliRunner {
         display.renderMessage("╔══════════════════════════════════════════════════════════╗");
         display.renderMessage("║              CourseSimplified — SJSU Planner             ║");
         display.renderMessage("╚══════════════════════════════════════════════════════════╝");
-        display.renderMessage("  Commands:  select cs | select swe | tree | complete | help | quit");
+        display.renderMessage("  Commands:  select cs | select swe | tree | complete | status | help | quit");
         display.renderMessage("");
 
         boolean running = true;
@@ -42,20 +45,40 @@ public class CliRunner {
                     display.renderError("Failed to load major: " + e.getMessage());
                 }
             } else if (command instanceof Command.MarkComplete mc) {
-                if (service.getCurrentMajor() == null) {
+                if (!service.hasCurrentMajor()) {
                     display.renderError("No major selected. Use 'select cs' or 'select swe' first.");
-                } else if (service.getCurrentMajor().getCourseGraph().getCourse(mc.courseCode()).isEmpty()) {
-                    display.renderError("Course '" + mc.courseCode() + "' not found in current major.");
                 } else {
-                    service.markCourseCompleted(mc.courseCode());
-                    display.renderMessage("✓ " + mc.courseCode() + " marked as completed and saved.");
+                    Optional<Course> course = service.findCourseInCurrentMajor(mc.courseCode());
+                    if (course.isEmpty()) {
+                        display.renderError("Course '" + mc.courseCode() + "' not found in current major.");
+                        continue;
+                    }
+
+                    String courseCode = course.get().getCourseCode();
+                    service.updateCourseStatus(courseCode, CourseStatus.Completed);
+                    display.renderMessage("✓ " + courseCode + " marked as completed and saved.");
                 }
             } else if (command instanceof Command.MarkIncomplete mi) {
-                if (service.getCurrentMajor() == null) {
+                if (!service.hasCurrentMajor()) {
+                    display.renderError("No major selected. Use 'select cs' or 'select swe' first.");
+                } else if (service.findCourseInCurrentMajor(mi.courseCode()).isEmpty()) {
+                    display.renderError("Course '" + mi.courseCode() + "' not found in current major.");
+                } else {
+                    String courseCode = service.findCourseInCurrentMajor(mi.courseCode())
+                            .map(Course::getCourseCode)
+                            .orElse(service.normalizeCourseCode(mi.courseCode()));
+                    service.updateCourseStatus(courseCode, CourseStatus.Remaining);
+                    display.renderMessage("✗ " + courseCode + " marked as incomplete and saved.");
+                }
+            } else if (command instanceof Command.UpdateStatus us) {
+                if (!service.hasCurrentMajor()) {
                     display.renderError("No major selected. Use 'select cs' or 'select swe' first.");
                 } else {
-                    service.markCourseIncomplete(mi.courseCode());
-                    display.renderMessage("✗ " + mi.courseCode() + " marked as incomplete and saved.");
+                    try {
+                        display.renderMessage(service.updateCourseStatus(us.courseCode(), us.status()));
+                    } catch (IllegalArgumentException | IllegalStateException e) {
+                        display.renderError(e.getMessage());
+                    }
                 }
             } else if (command instanceof Command.ShowTree) {
                 Major current = service.getCurrentMajor();
@@ -83,6 +106,7 @@ public class CliRunner {
         display.renderMessage("    tree                    — display the course prerequisite tree");
         display.renderMessage("    complete <code>         — mark a course as completed  (e.g. complete CS 46A)");
         display.renderMessage("    uncomplete <code>       — mark a course as not completed");
+        display.renderMessage("    status <code> <status>  — set Remaining, In Progress, or Completed");
         display.renderMessage("    help                    — show this help");
         display.renderMessage("    quit                    — exit the program");
         display.renderMessage("");

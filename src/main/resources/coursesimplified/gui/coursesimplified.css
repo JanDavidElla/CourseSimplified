@@ -1,0 +1,186 @@
+.root {
+    -fx-font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+    -fx-background-color: linear-gradient(to bottom right, #f5f7fa, #dfe7ef);
+}
+
+.app-shell {
+    -fx-background-color: transparent;
+}
+
+.panel {
+    -fx-background-color: rgba(255, 255, 255, 0.94);
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-border-color: rgba(16, 42, 67, 0.08);
+    -fx-border-width: 1;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.10), 18, 0.15, 0, 8);
+}
+
+.top-panel {
+    -fx-padding: 24;
+}
+
+.title-label {
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #102a43;
+}
+
+.subtitle-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #486581;
+}
+
+.section-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #102a43;
+}
+
+.field-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #334e68;
+}
+
+.progress-meta-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #486581;
+}
+
+.summary-row {
+    -fx-padding: 4 0 0 0;
+    -fx-spacing: 28;
+}
+
+.remaining-summary-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #7b8794;
+    -fx-min-width: 120;
+}
+
+.in-progress-summary-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #7c5d12;
+    -fx-min-width: 120;
+}
+
+.completed-summary-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1f7a4d;
+    -fx-min-width: 120;
+}
+
+.combo-box,
+.text-field,
+.button {
+    -fx-font-size: 13px;
+}
+
+.combo-box,
+.text-field {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #bcccdc;
+    -fx-border-width: 1;
+    -fx-padding: 8 12;
+}
+
+.combo-box:focused,
+.text-field:focused {
+    -fx-border-color: #0f609b;
+    -fx-effect: dropshadow(gaussian, rgba(15, 96, 155, 0.18), 10, 0.12, 0, 2);
+}
+
+.button {
+    -fx-background-color: linear-gradient(to bottom, #0f609b, #0a4e81);
+    -fx-background-radius: 12;
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: linear-gradient(to bottom, #1272b9, #0d5b95);
+}
+
+.button:disabled {
+    -fx-background-color: #9fb3c8;
+    -fx-opacity: 0.85;
+}
+
+.tree-view {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-border-color: #d9e2ec;
+    -fx-padding: 8;
+}
+
+.tree-view .virtual-flow .clipped-container .sheet {
+    -fx-background-color: transparent;
+}
+
+.tree-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 8 10;
+    -fx-text-fill: #243b53;
+}
+
+.tree-cell.course-completed {
+    -fx-text-fill: #1f7a4d;
+}
+
+.tree-cell.course-in-progress {
+    -fx-text-fill: #7c5d12;
+}
+
+.tree-cell.course-remaining {
+    -fx-text-fill: #7b8794;
+}
+
+.tree-cell.tree-placeholder {
+    -fx-text-fill: #829ab1;
+}
+
+.tree-cell:selected {
+    -fx-background-color: rgba(15, 96, 155, 0.16);
+    -fx-background-radius: 10;
+    -fx-text-fill: #102a43;
+}
+
+.tree-cell.course-completed:selected {
+    -fx-text-fill: #1f7a4d;
+}
+
+.tree-cell.course-in-progress:selected {
+    -fx-text-fill: #7c5d12;
+}
+
+.tree-cell.course-remaining:selected {
+    -fx-text-fill: #52606d;
+}
+
+.status-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+
+.status-info {
+    -fx-text-fill: #486581;
+}
+
+.status-success {
+    -fx-text-fill: #1f7a4d;
+}
+
+.status-error {
+    -fx-text-fill: #b42318;
+}

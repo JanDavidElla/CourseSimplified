@@ -1,71 +1,137 @@
 package coursesimplified.service;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import coursesimplified.model.CourseStatus;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class JsonCompletionService implements CompletionService {
     private final Path filePath;
     private final Gson gson;
-    private final Set<String> completedCodes;
+    private final Map<String, CourseStatus> statusesByCode;
 
     public JsonCompletionService(Path filePath, Gson gson) {
         this.filePath = filePath;
         this.gson = gson;
-        this.completedCodes = new HashSet<>();
+        this.statusesByCode = new LinkedHashMap<>();
         load();
     }
 
     @Override
-    public void markCompleted(String courseCode) {
-        completedCodes.add(courseCode.trim());
-        save();
+    public void updateStatus(String courseCode, CourseStatus status) {
+        String normalizedCourseCode = normalizeCourseCode(courseCode);
+        CourseStatus previousStatus = statusesByCode.get(normalizedCourseCode);
+
+        if (status == null || status == CourseStatus.Remaining) {
+            statusesByCode.remove(normalizedCourseCode);
+        } else {
+            statusesByCode.put(normalizedCourseCode, status);
+        }
+
+        try {
+            save();
+        } catch (IllegalStateException e) {
+            if (previousStatus == null) {
+                statusesByCode.remove(normalizedCourseCode);
+            } else {
+                statusesByCode.put(normalizedCourseCode, previousStatus);
+            }
+            throw e;
+        }
     }
 
     @Override
-    public void markIncomplete(String courseCode) {
-        completedCodes.remove(courseCode.trim());
-        save();
+    public CourseStatus getStatus(String courseCode) {
+        return statusesByCode.getOrDefault(normalizeCourseCode(courseCode), CourseStatus.Remaining);
     }
 
     @Override
-    public boolean isCompleted(String courseCode) {
-        return completedCodes.contains(courseCode.trim());
+    public Map<String, CourseStatus> getAllStatuses() {
+        return Map.copyOf(statusesByCode);
     }
 
     @Override
     public Set<String> getAllCompleted() {
-        return Set.copyOf(completedCodes);
+        return CompletionService.super.getAllCompleted();
     }
 
     private void load() {
         if (!Files.exists(filePath)) return;
         try {
             String json = Files.readString(filePath);
-            CompletionData data = gson.fromJson(json, CompletionData.class);
-            if (data != null && data.completed() != null) {
-                completedCodes.addAll(data.completed());
+            JsonElement root = gson.fromJson(json, JsonElement.class);
+            if (root == null || root.isJsonNull()) {
+                return;
             }
-        } catch (IOException e) {
+
+            if (root.isJsonArray()) {
+                loadLegacyCompletedArray(root.getAsJsonArray());
+                return;
+            }
+
+            if (root.isJsonObject()) {
+                JsonObject object = root.getAsJsonObject();
+                // Preserve compatibility with the original completed-only JSON shape.
+                if (object.has("completed") && object.get("completed").isJsonArray()) {
+                    loadLegacyCompletedArray(object.getAsJsonArray("completed"));
+                    return;
+                }
+
+                // Current format stores only non-remaining statuses as courseCode -> status.
+                for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+                    if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isString()) {
+                        continue;
+                    }
+
+                    String normalizedCourseCode = normalizeCourseCode(entry.getKey());
+                    try {
+                        CourseStatus status = CourseStatus.fromInput(entry.getValue().getAsString());
+                        if (status != CourseStatus.Remaining) {
+                            statusesByCode.put(normalizedCourseCode, status);
+                        }
+                    } catch (IllegalArgumentException ignored) {
+                        // Skip unknown status values to preserve forward compatibility.
+                    }
+                }
+            }
+        } catch (IOException | RuntimeException e) {
             System.err.println("Warning: could not read " + filePath + ": " + e.getMessage());
         }
     }
 
     private void save() {
         try {
-            String json = gson.toJson(new CompletionData(List.copyOf(completedCodes)));
+            // Keep the file compact by omitting Remaining courses from persisted data.
+            Map<String, String> serializedStatuses = new TreeMap<>();
+            for (Map.Entry<String, CourseStatus> entry : statusesByCode.entrySet()) {
+                serializedStatuses.put(entry.getKey(), entry.getValue().name());
+            }
+            String json = gson.toJson(serializedStatuses);
             Files.writeString(filePath, json);
         } catch (IOException e) {
-            System.err.println("Warning: could not save " + filePath + ": " + e.getMessage());
+            throw new IllegalStateException("Failed to save course statuses: " + e.getMessage(), e);
         }
     }
 
-    private record CompletionData(List<String> completed) {}
+    private String normalizeCourseCode(String courseCode) {
+        return courseCode == null ? "" : courseCode.trim().replaceAll("\\s+", " ").toUpperCase(Locale.ROOT);
+    }
+
+    private void loadLegacyCompletedArray(JsonArray completedArray) {
+        for (JsonElement courseCodeElement : completedArray) {
+            if (courseCodeElement.isJsonPrimitive() && courseCodeElement.getAsJsonPrimitive().isString()) {
+                statusesByCode.put(normalizeCourseCode(courseCodeElement.getAsString()), CourseStatus.Completed);
+            }
+        }
+    }
 }

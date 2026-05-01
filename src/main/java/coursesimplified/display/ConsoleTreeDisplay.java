@@ -32,10 +32,12 @@ public class ConsoleTreeDisplay implements CourseTreeDisplay {
     public void renderSummary(CourseGraph graph) {
         String name = graph.getMajorType().getDisplayName();
         long completed = graph.getCompletedCount();
+        long inProgress = graph.getInProgressCount();
         int total = graph.getTotalCount();
         System.out.println("═".repeat(60));
         System.out.println("  " + name);
         System.out.printf("  Progress: %d / %d courses completed%n", completed, total);
+        System.out.printf("  In Progress: %d course%s%n", inProgress, inProgress == 1 ? "" : "s");
         System.out.println("═".repeat(60));
     }
 

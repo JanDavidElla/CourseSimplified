@@ -54,6 +54,10 @@ public class CourseGraph {
         return coursesByCourseCode.values().stream().filter(Course::isCompleted).count();
     }
 
+    public long getInProgressCount() {
+        return coursesByCourseCode.values().stream().filter(Course::isInProgress).count();
+    }
+
     public int getTotalCount() {
         return coursesByCourseCode.size();
     }
