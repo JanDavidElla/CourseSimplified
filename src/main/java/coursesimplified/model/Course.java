@@ -22,17 +22,40 @@ public class Course {
         this.status = builder.status;
     }
 
-    public String getCourseCode() { return courseCode; }
-    public String getCourseName() { return courseName; }
-    public int getTotalUnits() { return totalUnits; }
-    public List<Course> getPrerequisites() { return prerequisites; }
-    public boolean isRoot() { return isRoot; }
-    public boolean isLeaf() { return isLeaf; }
-    public CourseStatus getStatus() { return status; }
-    public void setStatus(CourseStatus status) { this.status = status == null ? CourseStatus.Remaining : status; }
-    public boolean isCompleted() { return status == CourseStatus.Completed; }
-    public boolean isInProgress() { return status == CourseStatus.InProgress; }
-    public void setCompleted(boolean completed) { this.status = completed ? CourseStatus.Completed : CourseStatus.Remaining; }
+    // Getters and setters
+    public String getCourseCode() { 
+        return courseCode; 
+    }
+    public String getCourseName() { 
+        return courseName; 
+    }
+    public int getTotalUnits() { 
+        return totalUnits; 
+    }
+    public List<Course> getPrerequisites() { 
+        return prerequisites; 
+    }
+    public boolean isRoot() { 
+        return isRoot; 
+    }
+    public boolean isLeaf() { 
+        return isLeaf; 
+    }
+    public CourseStatus getStatus() { 
+        return status; 
+    }
+    public void setStatus(CourseStatus status) { 
+        this.status = status == null ? CourseStatus.Remaining : status; 
+    }
+    public boolean isCompleted() { 
+        return status == CourseStatus.Completed; 
+    }
+    public boolean isInProgress() { 
+        return status == CourseStatus.InProgress; 
+    }
+    public void setCompleted(boolean completed) { 
+        this.status = completed ? CourseStatus.Completed : CourseStatus.Remaining; 
+    }
 
     @Override
     public String toString() {
@@ -43,7 +66,8 @@ public class Course {
         return units == 1 ? "1 unit" : units + " units";
     }
 
-    public static class Builder {
+//STATIC Course Builder for easier construction of Course object, especially when many fields are optional 
+public static class Builder {
         private String courseCode;
         private String courseName = "";
         private int totalUnits = 0;
@@ -52,14 +76,45 @@ public class Course {
         private boolean isLeaf = false;
         private CourseStatus status = CourseStatus.Remaining;
 
-        public Builder courseCode(String courseCode) { this.courseCode = courseCode; return this; }
-        public Builder courseName(String courseName) { this.courseName = courseName; return this; }
-        public Builder totalUnits(int totalUnits) { this.totalUnits = totalUnits; return this; }
-        public Builder prerequisites(List<Course> prerequisites) { this.prerequisites = prerequisites; return this; }
-        public Builder isRoot(boolean isRoot) { this.isRoot = isRoot; return this; }
-        public Builder isLeaf(boolean isLeaf) { this.isLeaf = isLeaf; return this; }
-        public Builder completed(boolean completed) { this.status = completed ? CourseStatus.Completed : CourseStatus.Remaining; return this; }
-        public Builder status(CourseStatus status) { this.status = status == null ? CourseStatus.Remaining : status; return this; }
+        public Builder courseCode(String courseCode) {
+            this.courseCode = courseCode;
+            return this;
+        }
+
+        public Builder courseName(String courseName) {
+            this.courseName = courseName;
+            return this;
+        }
+
+        public Builder totalUnits(int totalUnits) {
+            this.totalUnits = totalUnits;
+            return this;
+        }
+
+        public Builder prerequisites(List<Course> prerequisites) {
+            this.prerequisites = prerequisites;
+            return this;
+        }
+
+        public Builder isRoot(boolean isRoot) {
+            this.isRoot = isRoot;
+            return this;
+        }
+
+        public Builder isLeaf(boolean isLeaf) {
+            this.isLeaf = isLeaf;
+            return this;
+        }
+
+        public Builder completed(boolean completed) {
+            this.status = completed ? CourseStatus.Completed : CourseStatus.Remaining;
+            return this;
+        }
+
+        public Builder status(CourseStatus status) {
+            this.status = status == null ? CourseStatus.Remaining : status;
+            return this;
+        }
 
         public Course build() {
             if (courseCode == null || courseCode.isBlank()) {

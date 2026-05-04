@@ -4,9 +4,9 @@ package coursesimplified.model;
  * User-facing course workflow states shown in the CLI and JavaFX planner.
  */
 public enum CourseStatus {
-    Remaining("Remaining", "\u25cb", "[ ]"),
-    InProgress("In Progress", "\u25d0", "[~]"),
-    Completed("Completed", "\u2714", "[X]");
+    Remaining("Remaining", "❌", "[ ]"),
+    InProgress("In Progress", "⏳", "[~]"),
+    Completed("Completed", "✅", "[X]");
 
     private final String displayName;
     private final String treeIcon;
@@ -44,10 +44,6 @@ public enum CourseStatus {
     }
 
     private static String normalize(String input) {
-        return input.trim()
-                .toLowerCase()
-                .replace("-", "")
-                .replace("_", "")
-                .replace(" ", "");
+        return input.trim().toLowerCase().replace("-", "").replace("_", "").replace(" ", "");
     }
 }

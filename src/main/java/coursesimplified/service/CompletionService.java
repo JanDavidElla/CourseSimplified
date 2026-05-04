@@ -24,9 +24,6 @@ public interface CompletionService {
     }
 
     default Set<String> getAllCompleted() {
-        return getAllStatuses().entrySet().stream()
-                .filter(entry -> entry.getValue() == CourseStatus.Completed)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toUnmodifiableSet());
+        return getAllStatuses().entrySet().stream().filter(entry -> entry.getValue() == CourseStatus.Completed).map(Map.Entry::getKey).collect(Collectors.toUnmodifiableSet());
     }
 }
