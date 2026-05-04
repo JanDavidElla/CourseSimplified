@@ -1,7 +1,10 @@
 package coursesimplified;
 
+import java.nio.file.Path;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import coursesimplified.api.CourseApiClient;
 import coursesimplified.api.HttpCourseApiClient;
 import coursesimplified.repository.ApiCourseRepository;
@@ -9,21 +12,33 @@ import coursesimplified.repository.CourseRepository;
 import coursesimplified.service.CompletionService;
 import coursesimplified.service.CourseTreeService;
 import coursesimplified.service.JsonCompletionService;
-
-import java.nio.file.Path;
+import coursesimplified.service.UserService;
 
 public final class CourseSimplifiedBootstrap {
     private static final String API_BASE_URL = "https://course-api.gerardconsuelo.com";
+    private static final String DEFAULT_USER_ID = "cli";
+    private static final Path USERS_FILE = Path.of("users.json");
     private static final Path COMPLETION_FILE = Path.of("completed.json");
 
     private CourseSimplifiedBootstrap() {
     }
 
+    public static UserService createUserService() {
+        return new UserService(USERS_FILE);
+    }
+
     public static CourseTreeService createCourseTreeService() {
-        Gson gson = new GsonBuilder().create();
+        return createCourseTreeService(DEFAULT_USER_ID);
+    }
+
+    public static CourseTreeService createCourseTreeService(String userId) {
+        return createCourseTreeService(userId, new GsonBuilder().create());
+    }
+
+    private static CourseTreeService createCourseTreeService(String userId, Gson gson) {
         CourseApiClient apiClient = new HttpCourseApiClient(API_BASE_URL, gson);
         CourseRepository repository = new ApiCourseRepository(apiClient);
-        CompletionService completionService = new JsonCompletionService(COMPLETION_FILE, gson);
+        CompletionService completionService = new JsonCompletionService(COMPLETION_FILE, gson, userId);
         return new CourseTreeService(repository, completionService);
     }
 }

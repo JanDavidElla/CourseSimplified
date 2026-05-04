@@ -1,11 +1,5 @@
 package coursesimplified.service;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import coursesimplified.model.CourseStatus;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,36 +9,50 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+import coursesimplified.model.CourseStatus;
+
 public class JsonCompletionService implements CompletionService {
     private final Path filePath;
     private final Gson gson;
-    private final Map<String, CourseStatus> statusesByCode;
+    private final String userId;
+    private final Map<String, Map<String, CourseStatus>> statusesByUserId;
 
     public JsonCompletionService(Path filePath, Gson gson) {
+        this(filePath, gson, "cli");
+    }
+
+    public JsonCompletionService(Path filePath, Gson gson, String userId) {
         this.filePath = filePath;
         this.gson = gson;
-        this.statusesByCode = new LinkedHashMap<>();
+        this.userId = normalizeUserId(userId);
+        this.statusesByUserId = new LinkedHashMap<>();
         load();
     }
 
     @Override
     public void updateStatus(String courseCode, CourseStatus status) {
         String normalizedCourseCode = normalizeCourseCode(courseCode);
-        CourseStatus previousStatus = statusesByCode.get(normalizedCourseCode);
+        Map<String, CourseStatus> currentStatuses = currentStatuses();
+        CourseStatus previousStatus = currentStatuses.get(normalizedCourseCode);
 
         if (status == null || status == CourseStatus.Remaining) {
-            statusesByCode.remove(normalizedCourseCode);
+            currentStatuses.remove(normalizedCourseCode);
         } else {
-            statusesByCode.put(normalizedCourseCode, status);
+            currentStatuses.put(normalizedCourseCode, status);
         }
 
         try {
             save();
         } catch (IllegalStateException e) {
             if (previousStatus == null) {
-                statusesByCode.remove(normalizedCourseCode);
+                currentStatuses.remove(normalizedCourseCode);
             } else {
-                statusesByCode.put(normalizedCourseCode, previousStatus);
+                currentStatuses.put(normalizedCourseCode, previousStatus);
             }
             throw e;
         }
@@ -52,12 +60,12 @@ public class JsonCompletionService implements CompletionService {
 
     @Override
     public CourseStatus getStatus(String courseCode) {
-        return statusesByCode.getOrDefault(normalizeCourseCode(courseCode), CourseStatus.Remaining);
+        return currentStatuses().getOrDefault(normalizeCourseCode(courseCode), CourseStatus.Remaining);
     }
 
     @Override
     public Map<String, CourseStatus> getAllStatuses() {
-        return Map.copyOf(statusesByCode);
+        return Map.copyOf(currentStatuses());
     }
 
     @Override
@@ -75,7 +83,7 @@ public class JsonCompletionService implements CompletionService {
             }
 
             if (root.isJsonArray()) {
-                loadLegacyCompletedArray(root.getAsJsonArray());
+                loadLegacyCompletedArray(currentStatuses(), root.getAsJsonArray());
                 return;
             }
 
@@ -83,25 +91,17 @@ public class JsonCompletionService implements CompletionService {
                 JsonObject object = root.getAsJsonObject();
                 // Preserve compatibility with the original completed-only JSON shape.
                 if (object.has("completed") && object.get("completed").isJsonArray()) {
-                    loadLegacyCompletedArray(object.getAsJsonArray("completed"));
+                    loadLegacyCompletedArray(currentStatuses(), object.getAsJsonArray("completed"));
                     return;
                 }
 
-                // Current format stores only non-remaining statuses as courseCode -> status.
-                for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-                    if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isString()) {
-                        continue;
-                    }
+                boolean looksNestedByUser = object.entrySet().stream()
+                        .anyMatch(entry -> entry.getValue() != null && entry.getValue().isJsonObject());
 
-                    String normalizedCourseCode = normalizeCourseCode(entry.getKey());
-                    try {
-                        CourseStatus status = CourseStatus.fromInput(entry.getValue().getAsString());
-                        if (status != CourseStatus.Remaining) {
-                            statusesByCode.put(normalizedCourseCode, status);
-                        }
-                    } catch (IllegalArgumentException ignored) {
-                        // Skip unknown status values to preserve forward compatibility.
-                    }
+                if (looksNestedByUser) {
+                    loadNestedStatuses(object);
+                } else {
+                    loadFlatStatuses(currentStatuses(), object);
                 }
             }
         } catch (IOException | RuntimeException e) {
@@ -111,10 +111,13 @@ public class JsonCompletionService implements CompletionService {
 
     private void save() {
         try {
-            // Keep the file compact by omitting Remaining courses from persisted data.
-            Map<String, String> serializedStatuses = new TreeMap<>();
-            for (Map.Entry<String, CourseStatus> entry : statusesByCode.entrySet()) {
-                serializedStatuses.put(entry.getKey(), entry.getValue().name());
+            Map<String, Map<String, String>> serializedStatuses = new TreeMap<>();
+            for (Map.Entry<String, Map<String, CourseStatus>> userEntry : statusesByUserId.entrySet()) {
+                Map<String, String> serializedUserStatuses = new TreeMap<>();
+                for (Map.Entry<String, CourseStatus> statusEntry : userEntry.getValue().entrySet()) {
+                    serializedUserStatuses.put(statusEntry.getKey(), statusEntry.getValue().name());
+                }
+                serializedStatuses.put(userEntry.getKey(), serializedUserStatuses);
             }
             String json = gson.toJson(serializedStatuses);
             Files.writeString(filePath, json);
@@ -127,11 +130,50 @@ public class JsonCompletionService implements CompletionService {
         return courseCode == null ? "" : courseCode.trim().replaceAll("\\s+", " ").toUpperCase(Locale.ROOT);
     }
 
-    private void loadLegacyCompletedArray(JsonArray completedArray) {
+    private String normalizeUserId(String userId) {
+        return userId == null ? "" : userId.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private Map<String, CourseStatus> currentStatuses() {
+        return statusesByUserId.computeIfAbsent(userId, key -> new LinkedHashMap<>());
+    }
+
+    private void loadLegacyCompletedArray(Map<String, CourseStatus> targetStatuses, JsonArray completedArray) {
         for (JsonElement courseCodeElement : completedArray) {
             if (courseCodeElement.isJsonPrimitive() && courseCodeElement.getAsJsonPrimitive().isString()) {
-                statusesByCode.put(normalizeCourseCode(courseCodeElement.getAsString()), CourseStatus.Completed);
+                targetStatuses.put(normalizeCourseCode(courseCodeElement.getAsString()), CourseStatus.Completed);
             }
+        }
+    }
+
+    private void loadFlatStatuses(Map<String, CourseStatus> targetStatuses, JsonObject object) {
+        for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+            if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isString()) {
+                continue;
+            }
+
+            String normalizedCourseCode = normalizeCourseCode(entry.getKey());
+            try {
+                CourseStatus status = CourseStatus.fromInput(entry.getValue().getAsString());
+                if (status != CourseStatus.Remaining) {
+                    targetStatuses.put(normalizedCourseCode, status);
+                }
+            } catch (IllegalArgumentException ignored) {
+                // Skip unknown status values to preserve forward compatibility.
+            }
+        }
+    }
+
+    private void loadNestedStatuses(JsonObject object) {
+        for (Map.Entry<String, JsonElement> userEntry : object.entrySet()) {
+            if (!userEntry.getValue().isJsonObject()) {
+                continue;
+            }
+
+            Map<String, CourseStatus> targetStatuses = statusesByUserId.computeIfAbsent(
+                    normalizeUserId(userEntry.getKey()),
+                    key -> new LinkedHashMap<>());
+            loadFlatStatuses(targetStatuses, userEntry.getValue().getAsJsonObject());
         }
     }
 }
