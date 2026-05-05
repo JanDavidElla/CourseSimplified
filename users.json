@@ -1,1 +1,12 @@
-{"andrew":{"userId":"andrew","username":"andrew","passwordHash":"18m3+Ye5EY21Vj6hxSNNzQ\u003d\u003d:E5akFsk62xiPkId/7gCDLzV3ZivdjxuXSyDbEs6nwvs\u003d"}}
+{
+  "user": {
+    "userId": "user",
+    "username": "user",
+    "passwordHash": "ag4PWxtv/XGYZc48XhM4XQ\u003d\u003d:Qd6GyQT6NnC0ujYqWo9kKPC1IToTsGKex29Vxobxf48\u003d"
+  },
+  "root": {
+    "userId": "root",
+    "username": "root",
+    "passwordHash": "lBjS3UZ1TjsLGxaYunAZqQ\u003d\u003d:LYhXkNKaY1XeCqlLa9Iz8BoYVktjBNlF2CgOXSG3foI\u003d"
+  }
+}

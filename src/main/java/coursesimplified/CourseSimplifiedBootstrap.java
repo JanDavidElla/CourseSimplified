@@ -19,12 +19,13 @@ public final class CourseSimplifiedBootstrap {
     private static final String DEFAULT_USER_ID = "cli";
     private static final Path USERS_FILE = Path.of("users.json");
     private static final Path COMPLETION_FILE = Path.of("completed.json");
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private CourseSimplifiedBootstrap() {
     }
 
     public static UserService createUserService() {
-        return new UserService(USERS_FILE);
+        return new UserService(USERS_FILE, GSON);
     }
 
     public static CourseTreeService createCourseTreeService() {
@@ -32,13 +33,9 @@ public final class CourseSimplifiedBootstrap {
     }
 
     public static CourseTreeService createCourseTreeService(String userId) {
-        return createCourseTreeService(userId, new GsonBuilder().create());
-    }
-
-    private static CourseTreeService createCourseTreeService(String userId, Gson gson) {
-        CourseApiClient apiClient = new HttpCourseApiClient(API_BASE_URL, gson);
+        CourseApiClient apiClient = new HttpCourseApiClient(API_BASE_URL, GSON);
         CourseRepository repository = new ApiCourseRepository(apiClient);
-        CompletionService completionService = new JsonCompletionService(COMPLETION_FILE, gson, userId);
+        CompletionService completionService = new JsonCompletionService(COMPLETION_FILE, GSON, userId);
         return new CourseTreeService(repository, completionService);
     }
 }
