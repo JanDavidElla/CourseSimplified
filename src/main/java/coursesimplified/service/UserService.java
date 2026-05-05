@@ -70,6 +70,16 @@ public class UserService {
         currentUser = null;
     }
 
+    public String getLastMajorForCurrent() {
+        return currentUser == null ? null : currentUser.getLastMajor();
+    }
+
+    public void setLastMajorForCurrent(String majorName) {
+        if (currentUser == null) return;
+        currentUser.setLastMajor(majorName);
+        save();
+    }
+
     public User getCurrentUser() {
         return currentUser;
     }
