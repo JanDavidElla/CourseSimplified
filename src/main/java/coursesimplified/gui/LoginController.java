@@ -31,7 +31,7 @@ public class LoginController {
     }
 
     public Parent createView() {
-        Label titleLabel = new Label("CourseSimplified Login");
+        Label titleLabel = new Label("CourseSimplified");
         titleLabel.getStyleClass().add("title-label");
 
         Label subtitleLabel = new Label("Use a username and password to open your personalized roadmap.");

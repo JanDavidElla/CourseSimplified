@@ -28,7 +28,9 @@ import javafx.util.StringConverter;
  */
 public class CourseSimplifiedController {
     private final CourseTreeService service;
+    private final coursesimplified.service.UserService userService;
     private final CourseTreeViewBuilder treeViewBuilder;
+    private Runnable logoutHandler = () -> {};
 
     private final ComboBox<MajorType> majorSelector = new ComboBox<>();
     private final Button loadRoadmapButton = new Button("Load Roadmap");
@@ -42,9 +44,14 @@ public class CourseSimplifiedController {
     private final Button updateStatusButton = new Button("Update Status");
     private final Label feedbackLabel = new Label("Select a major and load a roadmap to begin.");
 
-    public CourseSimplifiedController(CourseTreeService service) {
+    public CourseSimplifiedController(CourseTreeService service, coursesimplified.service.UserService userService) {
         this.service = service;
+        this.userService = userService;
         this.treeViewBuilder = new CourseTreeViewBuilder();
+    }
+
+    public void setLogoutHandler(Runnable logoutHandler) {
+        this.logoutHandler = logoutHandler == null ? () -> {} : logoutHandler;
     }
 
     public Parent createView() {
@@ -57,7 +64,13 @@ public class CourseSimplifiedController {
         Label majorLabel = new Label("Major");
         majorLabel.getStyleClass().add("field-label");
 
-        HBox selectorRow = new HBox(12, majorLabel, majorSelector, loadRoadmapButton);
+        Button logoutButton = new Button("Logout");
+        logoutButton.setOnAction(e -> {
+            if (userService != null) userService.logout();
+            logoutHandler.run();
+        });
+
+        HBox selectorRow = new HBox(12, majorLabel, majorSelector, loadRoadmapButton, logoutButton);
         selectorRow.setAlignment(Pos.CENTER_LEFT);
 
         progressLabel.getStyleClass().add("progress-meta-label");
@@ -218,6 +231,10 @@ public class CourseSimplifiedController {
             setBusy(false);
             refreshRoadmap(service.getCurrentCourseGraph());
             showSuccess("Loaded " + loadTask.getValue().getMajorName() + ".");
+            // Persist the recently loaded major for the logged-in user
+            if (userService != null && userService.hasCurrentUser()) {
+                userService.setLastMajorForCurrent(selectedMajor.name());
+            }
             courseInput.requestFocus();
         });
 
@@ -230,6 +247,48 @@ public class CourseSimplifiedController {
                 clearRoadmap();
             }
             // Surface a clear load error in the feedback area instead of failing silently.
+            showError("Course data could not be loaded: " + buildErrorMessage(loadTask.getException()));
+        });
+
+        Thread loaderThread = new Thread(loadTask, "coursesimplified-roadmap-loader");
+        loaderThread.setDaemon(true);
+        loaderThread.start();
+    }
+
+    public void loadMajorProgrammatically(MajorType selectedMajor) {
+        if (selectedMajor == null) return;
+
+        Major previouslyLoadedMajor = service.getCurrentMajor();
+        setBusy(true);
+        showInfo("Loading " + toShortLabel(selectedMajor) + " roadmap...");
+
+        Task<Major> loadTask = new Task<>() {
+            @Override
+            protected Major call() {
+                return service.loadMajor(selectedMajor);
+            }
+        };
+
+        loadTask.setOnSucceeded(event -> {
+            setBusy(false);
+            refreshRoadmap(service.getCurrentCourseGraph());
+            showSuccess("Loaded " + loadTask.getValue().getMajorName() + ".");
+            courseInput.requestFocus();
+            if (userService != null && userService.hasCurrentUser()) {
+                userService.setLastMajorForCurrent(selectedMajor.name());
+            }
+        });
+
+        loadTask.setOnFailed(event -> {
+            setBusy(false);
+            if (previouslyLoadedMajor != null) {
+                // restore previous state
+                // note: previousMajor may be null if none loaded before
+                majorSelector.setValue(previouslyLoadedMajor.getType());
+                refreshRoadmap(service.getCurrentCourseGraph());
+            } else {
+                clearRoadmap();
+            }
             showError("Course data could not be loaded: " + buildErrorMessage(loadTask.getException()));
         });
 
