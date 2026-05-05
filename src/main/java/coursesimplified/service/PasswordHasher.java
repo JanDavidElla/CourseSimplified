@@ -4,9 +4,7 @@ import java.security.SecureRandom;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.SecretKeyFactory;
 
-import java.util.Arrays;
 import java.util.Base64;
-import java.util.concurrent.TransferQueue;
 
 
 public class PasswordHasher {
@@ -16,8 +14,8 @@ public class PasswordHasher {
         try {
             byte[] salt = new byte[16];
             new SecureRandom().nextBytes(salt);
-            PBEKeySpec spec = new PBEKeySpec(plainTextPassword.toCharArray(), salt, 65536, 128);
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            PBEKeySpec spec = new PBEKeySpec(plainTextPassword.toCharArray(), salt, 310000, 256);
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             byte[] hash = skf.generateSecret(spec).getEncoded();
             return Base64.getEncoder().encodeToString(salt) + ":" + Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
@@ -36,8 +34,8 @@ public class PasswordHasher {
 
         byte[] guessHash;
         try {
-            PBEKeySpec spec = new PBEKeySpec(formPassword.toCharArray(), salt, 65536, 128);
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            PBEKeySpec spec = new PBEKeySpec(formPassword.toCharArray(), salt, 310000, 256);
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             guessHash = skf.generateSecret(spec).getEncoded();
         } catch (Exception e) {
             throw new RuntimeException("Error hashing guess password", e);

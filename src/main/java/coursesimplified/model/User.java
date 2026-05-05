@@ -3,16 +3,16 @@ package coursesimplified.model;
 public class User {
     private String userId;
     private String username;
-    private String password;
+    private String passwordHash;
     private String lastMajor;
 
     public User() {
     }
 
-    public User(String userId, String username, String password) {
+    public User(String userId, String username, String passwordHash) {
         this.userId = userId;
         this.username = username;
-        this.password = password;
+        this.passwordHash = passwordHash;
     }
 
     public String getLastMajor() {
@@ -31,7 +31,7 @@ public class User {
         return username;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 }

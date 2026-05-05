@@ -11,6 +11,7 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import coursesimplified.service.PasswordHasher;
 import coursesimplified.model.User;
 
 public class UserService {
@@ -20,6 +21,7 @@ public class UserService {
     private final Gson gson;
     private final Map<String, User> usersById;
     private User currentUser;
+    private final PasswordHasher passwordHasher = new PasswordHasher();
 
     public UserService(Path filePath) {
         this(filePath, new Gson());
@@ -42,7 +44,7 @@ public class UserService {
         if (user == null) {
             throw new IllegalArgumentException("No account exists for that username.");
         }
-        if (!password.equals(user.getPassword())) {
+        if (!passwordHasher.verification(password, user.getPasswordHash())) {
             throw new IllegalArgumentException("Incorrect password.");
         }
 
@@ -59,7 +61,7 @@ public class UserService {
             throw new IllegalArgumentException("That username already exists.");
         }
 
-        User user = new User(normalizedUserId, username.trim(), password);
+        User user = new User(normalizedUserId, username.trim(), passwordHasher.storableHashObject(password));
         usersById.put(normalizedUserId, user);
         save();
         currentUser = user;
