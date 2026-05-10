@@ -1,3 +1,4 @@
 target/
 completed.json
-
+.DS_Store
+users.json
