@@ -1,6 +1,7 @@
 package coursesimplified.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Course {
@@ -33,7 +34,7 @@ public class Course {
         return totalUnits; 
     }
     public List<Course> getPrerequisites() { 
-        return prerequisites; 
+        return Collections.unmodifiableList(prerequisites); // Return an unmodifiable view to prevent external modification (course.getPrequisites().add())
     }
     public boolean isRoot() { 
         return isRoot; 
@@ -55,6 +56,18 @@ public class Course {
     }
     public void setCompleted(boolean completed) { 
         this.status = completed ? CourseStatus.Completed : CourseStatus.Remaining; 
+    }
+
+    /**
+     * Add a prerequisite course to this course.
+     * Used during graph construction to establish prerequisite relationships.
+     * 
+     * @param prerequisite the prerequisite course to add
+     */
+    public void addPrerequisite(Course prerequisite) {
+        if (!prerequisites.contains(prerequisite)) {
+            prerequisites.add(prerequisite);
+        }
     }
 
     @Override

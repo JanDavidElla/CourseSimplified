@@ -11,7 +11,6 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import coursesimplified.service.PasswordHasher;
 import coursesimplified.model.User;
 
 public class UserService {
@@ -21,15 +20,20 @@ public class UserService {
     private final Gson gson;
     private final Map<String, User> usersById;
     private User currentUser;
-    private final PasswordHasher passwordHasher = new PasswordHasher();
+    private final PasswordHasher passwordHasher;
 
     public UserService(Path filePath) {
         this(filePath, new Gson());
     }
 
     public UserService(Path filePath, Gson gson) {
+        this(filePath, gson, new PasswordHasher());
+    }
+
+    public UserService(Path filePath, Gson gson, PasswordHasher passwordHasher) {
         this.filePath = filePath;
         this.gson = gson;
+        this.passwordHasher = passwordHasher;
         this.usersById = new LinkedHashMap<>();
         load();
     }

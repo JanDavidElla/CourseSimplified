@@ -2,6 +2,7 @@ package coursesimplified.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class CourseGraph {
     }
 
     public Collection<Course> getAllCourses() {
-        return coursesByCourseCode.values();
+        return Collections.unmodifiableCollection(coursesByCourseCode.values()); //doesn't return a copy, but prevents external modification (courseGraph.getAllCourses().add())
     }
 
     public List<Course> getRootCourses() {
@@ -43,7 +44,7 @@ public class CourseGraph {
     }
 
     public List<CourseEdge> getEdges() {
-        return edges;
+        return Collections.unmodifiableList(edges);
     }
 
     public MajorType getMajorType() {
