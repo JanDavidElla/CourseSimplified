@@ -11,16 +11,19 @@ import javafx.stage.Stage;
 
 public class CourseSimplifiedJavaFxApplication extends Application {
     private static final String WINDOW_TITLE = "CourseSimplified \u2013 SJSU Planner";
+    private static final String LOGIN_TITLE = "CourseSimplified \u2013 Sign In";
+    private static final double LOGIN_WIDTH = 1040;
+    private static final double LOGIN_HEIGHT = 760;
+    private static final double PLANNER_WIDTH = 1120;
+    private static final double PLANNER_HEIGHT = 820;
 
-    private Stage primaryStage;
     private final UserService userService = CourseSimplifiedBootstrap.createUserService();
+    private Stage primaryStage;
 
     @Override
     public void start(Stage stage) {
-        this.primaryStage = stage;
+        primaryStage = stage;
         showLoginScene();
-        primaryStage.setMinWidth(900);
-        primaryStage.setMinHeight(620);
         primaryStage.show();
     }
 
@@ -28,38 +31,45 @@ public class CourseSimplifiedJavaFxApplication extends Application {
         LoginController loginController = new LoginController(userService);
         loginController.setLoginSuccessHandler(this::showPlannerScene);
 
-        Scene scene = new Scene(loginController.createView(), 720, 520);
+        Scene scene = new Scene(loginController.createView(), LOGIN_WIDTH, LOGIN_HEIGHT);
         applyStylesheet(scene);
 
-        primaryStage.setTitle("CourseSimplified - Login");
+        primaryStage.setMinWidth(LOGIN_WIDTH);
+        primaryStage.setMinHeight(LOGIN_HEIGHT);
+        primaryStage.setWidth(LOGIN_WIDTH);
+        primaryStage.setHeight(LOGIN_HEIGHT);
+        primaryStage.setTitle(LOGIN_TITLE);
         primaryStage.setScene(scene);
     }
 
     private void showPlannerScene(User user) {
-        var service = CourseSimplifiedBootstrap.createCourseTreeService(user.getUserId());
-        CourseSimplifiedController controller = new CourseSimplifiedController(service, userService);
+        CourseSimplifiedController controller = new CourseSimplifiedController(
+                CourseSimplifiedBootstrap.createCourseTreeService(user.getUserId()),
+                userService
+        );
         controller.setLogoutHandler(() -> {
             userService.logout();
             showLoginScene();
         });
 
-        Scene scene = new Scene(controller.createView(), 980, 720);
+        Scene scene = new Scene(controller.createView(), PLANNER_WIDTH, PLANNER_HEIGHT);
         applyStylesheet(scene);
-
         controller.initialize();
 
-        // Auto-load the last selected major for this user if present
         String lastMajor = userService.getLastMajorForCurrent();
         if (lastMajor != null && !lastMajor.isBlank()) {
             try {
-                var m = coursesimplified.model.MajorType.valueOf(lastMajor);
-                controller.loadMajorProgrammatically(m); //Used to preload last major opened by user.
+                controller.loadMajorProgrammatically(coursesimplified.model.MajorType.valueOf(lastMajor));
             } catch (IllegalArgumentException ignored) {
-                // ignore invalid stored value
+                // Ignore invalid saved values and leave the planner unloaded.
             }
         }
 
-        primaryStage.setTitle(WINDOW_TITLE + " - " + user.getUsername());
+        primaryStage.setMinWidth(PLANNER_WIDTH);
+        primaryStage.setMinHeight(PLANNER_HEIGHT);
+        primaryStage.setWidth(PLANNER_WIDTH);
+        primaryStage.setHeight(PLANNER_HEIGHT);
+        primaryStage.setTitle(WINDOW_TITLE + " \u2013 " + user.getUsername());
         primaryStage.setScene(scene);
     }
 

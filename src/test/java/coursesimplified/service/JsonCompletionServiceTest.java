@@ -50,4 +50,24 @@ public class JsonCompletionServiceTest {
             Files.deleteIfExists(tempFile);
         }
     }
+
+    @Test
+    public void isolatesStatusesByUserId() throws IOException {
+        Path tempFile = Files.createTempFile("coursesimplified-user-statuses", ".json");
+        try {
+            JsonCompletionService alexService = new JsonCompletionService(tempFile, gson, "alex");
+            JsonCompletionService jordanService = new JsonCompletionService(tempFile, gson, "jordan");
+
+            alexService.updateStatus("CS 46A", CourseStatus.Completed);
+            jordanService.updateStatus("CS 46A", CourseStatus.InProgress);
+
+            JsonCompletionService reloadedAlexService = new JsonCompletionService(tempFile, gson, "alex");
+            JsonCompletionService reloadedJordanService = new JsonCompletionService(tempFile, gson, "jordan");
+
+            assertEquals(CourseStatus.Completed, reloadedAlexService.getStatus("CS 46A"));
+            assertEquals(CourseStatus.InProgress, reloadedJordanService.getStatus("CS 46A"));
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
+    }
 }

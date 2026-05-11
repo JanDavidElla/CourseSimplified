@@ -1,5 +1,9 @@
 package coursesimplified.model;
 
+/**
+ * Persisted user account metadata for login, password verification, and the
+ * last major that user opened in the planner.
+ */
 public class User {
     private String userId;
     private String username;

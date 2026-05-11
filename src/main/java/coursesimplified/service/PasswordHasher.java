@@ -1,46 +1,50 @@
 package coursesimplified.service;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.SecretKeyFactory;
-
 import java.util.Base64;
 
-
+/**
+ * Hashes and verifies user passwords with PBKDF2 and a per-password salt.
+ */
 public class PasswordHasher {
-    public PasswordHasher() {}
-    //generate a new users hash object to be stored in the user json file. The format is salt:hash, both base64 encoded.
-    public String storableHashObject(String plainTextPassword){
+    /**
+     * Returns a storable "salt:hash" string where both values are Base64
+     * encoded.
+     */
+    public String storableHashObject(String plainTextPassword) {
         try {
             byte[] salt = new byte[16];
             new SecureRandom().nextBytes(salt);
-            PBEKeySpec spec = new PBEKeySpec(plainTextPassword.toCharArray(), salt, 310000, 256);
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            byte[] hash = skf.generateSecret(spec).getEncoded();
-            return Base64.getEncoder().encodeToString(salt) + ":" + Base64.getEncoder().encodeToString(hash);
+            PBEKeySpec spec = new PBEKeySpec(plainTextPassword.toCharArray(), salt, 310_000, 256);
+            SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] hash = secretKeyFactory.generateSecret(spec).getEncoded();
+            return Base64.getEncoder().encodeToString(salt)
+                    + ":"
+                    + Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
-            throw new RuntimeException("Error hashing password", e);
+            throw new IllegalStateException("Failed to hash password.", e);
         }
     }
-    //compare guess to password hash using the base64 entry.
-    public boolean verification(String formPassword, String base64hash){
 
-        String[] parts = base64hash.split(":");
-        String saltBase64 = parts[0];
-        String hashBase64 = parts[1];
-
-        byte[] hash = Base64.getDecoder().decode(hashBase64);
-        byte[] salt = Base64.getDecoder().decode(saltBase64);
-
-        byte[] guessHash;
-        try {
-            PBEKeySpec spec = new PBEKeySpec(formPassword.toCharArray(), salt, 310000, 256);
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            guessHash = skf.generateSecret(spec).getEncoded();
-        } catch (Exception e) {
-            throw new RuntimeException("Error hashing guess password", e);
+    public boolean verification(String enteredPassword, String storedHash) {
+        String[] parts = storedHash.split(":");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Stored password hash is invalid.");
         }
-        //moire secure than Arrays.equals for comparing the hashes.
-        return MessageDigest.isEqual(guessHash, hash);
+
+        byte[] salt = Base64.getDecoder().decode(parts[0]);
+        byte[] expectedHash = Base64.getDecoder().decode(parts[1]);
+
+        try {
+            PBEKeySpec spec = new PBEKeySpec(enteredPassword.toCharArray(), salt, 310_000, 256);
+            SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] actualHash = secretKeyFactory.generateSecret(spec).getEncoded();
+            return MessageDigest.isEqual(actualHash, expectedHash);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to verify password.", e);
+        }
     }
 }
