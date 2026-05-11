@@ -8,12 +8,18 @@
     "userId": "root",
     "username": "root",
     "passwordHash": "lBjS3UZ1TjsLGxaYunAZqQ\u003d\u003d:LYhXkNKaY1XeCqlLa9Iz8BoYVktjBNlF2CgOXSG3foI\u003d",
-    "lastMajor": "SWE"
+    "lastMajor": "CS"
   },
   "jan": {
     "userId": "jan",
     "username": "jan",
     "passwordHash": "amMVqKgza+D8LB6AX3XcGA\u003d\u003d:H18UuMH/iSKED//htXpBYLn7G7uQ2HsYDRyUaJytzTU\u003d",
     "lastMajor": "SWE"
+  },
+  "admin": {
+    "userId": "admin",
+    "username": "admin",
+    "passwordHash": "kG1z1B0q1N7bcAX1ACEN9Q\u003d\u003d:us91CHpwXZ8nuWSc4DLoYehYi9Nj9eiVZhwmNVVPXRs\u003d",
+    "lastMajor": "CS"
   }
 }
