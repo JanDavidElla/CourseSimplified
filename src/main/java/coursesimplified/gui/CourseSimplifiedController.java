@@ -171,6 +171,16 @@ public class CourseSimplifiedController {
         updateStatusButton.setOnAction(event -> handleUpdateStatus());
         courseInput.setOnAction(event -> handleUpdateStatus());
 
+        roadmapTree.getSelectionModel().selectedItemProperty().addListener((obs, oldItem, newItem) -> {
+            populateCourseFromTreeItem(newItem);
+        });
+
+        roadmapTree.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                populateCourseFromTreeItem(roadmapTree.getSelectionModel().getSelectedItem());
+            }
+        });
+
         updateActionAvailability(false);
     }
 
@@ -375,6 +385,27 @@ public class CourseSimplifiedController {
         feedbackLabel.setText(message);
         feedbackLabel.getStyleClass().removeAll("status-info", "status-success", "status-error");
         feedbackLabel.getStyleClass().add(styleClass);
+    }
+
+    private void populateCourseFromTreeItem(TreeItem<String> item) {
+        if (item == null || item.getValue() == null) return;
+
+        String value = item.getValue();
+        // Tree nodes for courses are formatted as: "<icon> <COURSE_CODE> - <name> (...)"
+        if (!value.contains(" - ")) return; // not a course node
+
+        String left = value.split(" - ", 2)[0].trim();
+        // left begins with the status icon then a space, then the course code
+        int firstSpace = left.indexOf(' ');
+        String codePart = firstSpace >= 0 ? left.substring(firstSpace + 1) : left;
+        String normalized = service.normalizeCourseCode(codePart);
+
+        if (normalized.isBlank()) return;
+
+        courseInput.setText(normalized);
+        // If the course exists in the loaded major, reflect its current status in the selector.
+        service.findCourseInCurrentMajor(normalized).ifPresent(course -> statusSelector.setValue(course.getStatus()));
+        courseInput.requestFocus();
     }
 
     // Rebuild the status summary after each roadmap load or course status update.
