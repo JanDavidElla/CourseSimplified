@@ -7,7 +7,8 @@
   "root": {
     "userId": "root",
     "username": "root",
-    "passwordHash": "lBjS3UZ1TjsLGxaYunAZqQ\u003d\u003d:LYhXkNKaY1XeCqlLa9Iz8BoYVktjBNlF2CgOXSG3foI\u003d"
+    "passwordHash": "lBjS3UZ1TjsLGxaYunAZqQ\u003d\u003d:LYhXkNKaY1XeCqlLa9Iz8BoYVktjBNlF2CgOXSG3foI\u003d",
+    "lastMajor": "SWE"
   },
   "jan": {
     "userId": "jan",

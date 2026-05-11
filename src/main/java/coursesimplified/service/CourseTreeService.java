@@ -62,7 +62,20 @@ public class CourseTreeService {
         Course course = requireCourseInCurrentMajor(courseCode);
         completionService.updateStatus(course.getCourseCode(), status);
         course.setStatus(status);
+        if (status == CourseStatus.Completed) {
+            completePrerequisitesRecursively(course);
+        }
         return course.getCourseCode() + " updated to " + status.getDisplayName();
+    }
+
+    private void completePrerequisitesRecursively(Course course) {
+        for (Course prereq : course.getPrerequisites()) {
+            if (prereq.getStatus() != CourseStatus.Completed) {
+                completionService.updateStatus(prereq.getCourseCode(), CourseStatus.Completed);
+                prereq.setStatus(CourseStatus.Completed);
+                completePrerequisitesRecursively(prereq);
+            }
+        }
     }
 
     public Major getCurrentMajor() {

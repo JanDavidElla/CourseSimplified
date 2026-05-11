@@ -158,8 +158,8 @@ public class CourseTreeServiceTest {
             Course cs46b = course("CS 46B", "Data Structures", 4, false, false);
             Course cs146 = course("CS 146", "Data Structures and Algorithms", 3, false, true);
 
-            cs46b.getPrerequisites().add(cs46a);
-            cs146.getPrerequisites().add(cs46b);
+            cs46b.addPrerequisite(cs46a);
+            cs146.addPrerequisite(cs46b);
 
             addCourses(graph, cs46a, cs46b, cs146);
             graph.addEdge("CS 46A", "CS 46B");
@@ -174,8 +174,8 @@ public class CourseTreeServiceTest {
             Course cmpe30 = course("CMPE 30", "Object-Oriented Programming", 3, false, false);
             Course cmpe131 = course("CMPE 131", "Software Engineering I", 3, false, true);
 
-            cmpe30.getPrerequisites().add(engr10);
-            cmpe131.getPrerequisites().add(cmpe30);
+            cmpe30.addPrerequisite(engr10);
+            cmpe131.addPrerequisite(cmpe30);
 
             addCourses(graph, engr10, cmpe30, cmpe131);
             graph.addEdge("ENGR 10", "CMPE 30");

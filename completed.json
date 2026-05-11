@@ -2,5 +2,11 @@
   "jan": {
     "MATH 30": "Completed",
     "MATH 31": "Completed"
+  },
+  "root": {
+    "CS 146": "Completed",
+    "CS 46B": "Completed",
+    "MATH 30": "Completed",
+    "MATH 42": "Completed"
   }
 }
