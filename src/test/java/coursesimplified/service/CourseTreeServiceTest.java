@@ -62,6 +62,7 @@ public class CourseTreeServiceTest {
     public void updatesValidCourseToInProgress() {
         CourseTreeService service = createService(Map.of());
         service.loadMajor(MajorType.CS);
+        service.updateCourseStatus("CS 46A", CourseStatus.Completed);
 
         String result = service.updateCourseStatus("CS 46B", CourseStatus.InProgress);
 
@@ -87,14 +88,49 @@ public class CourseTreeServiceTest {
     }
 
     @Test
+    public void rejectsCompletionWhenPrerequisitesAreIncomplete() {
+        CourseTreeService service = createService(Map.of());
+        service.loadMajor(MajorType.CS);
+
+        IllegalStateException error = assertThrows(
+                IllegalStateException.class,
+                () -> service.updateCourseStatus("CS 46B", CourseStatus.Completed)
+        );
+
+        assertEquals(
+                "Cannot mark CS 46B as Completed until prerequisites are completed: CS 46A.",
+                error.getMessage()
+        );
+        assertEquals(CourseStatus.Remaining, service.findCourseInCurrentMajor("CS 46B").orElseThrow().getStatus());
+        assertEquals(0, service.getCompletedCourseCount());
+    }
+
+    @Test
+    public void rejectsInProgressWhenPrerequisitesAreIncomplete() {
+        CourseTreeService service = createService(Map.of());
+        service.loadMajor(MajorType.CS);
+
+        IllegalStateException error = assertThrows(
+                IllegalStateException.class,
+                () -> service.updateCourseStatus("CS 46B", CourseStatus.InProgress)
+        );
+
+        assertEquals(
+                "Cannot mark CS 46B as In Progress until prerequisites are completed: CS 46A.",
+                error.getMessage()
+        );
+        assertEquals(CourseStatus.Remaining, service.findCourseInCurrentMajor("CS 46B").orElseThrow().getStatus());
+        assertEquals(0, service.getInProgressCourseCount());
+    }
+
+    @Test
     public void rejectsInvalidCourseIdsWithoutChangingProgress() {
         CourseTreeService service = createService(Map.of());
         service.loadMajor(MajorType.CS);
 
         IllegalArgumentException error = assertThrows(
                 IllegalArgumentException.class,
-                () -> service.updateCourseStatus("MATH 42", CourseStatus.Completed)
-        );
+                () -> service.updateCourseStatus("MATH 42", CourseStatus.Completed));
 
         assertEquals("Course 'MATH 42' not found in current major.", error.getMessage());
         assertTrue(service.findCourseInCurrentMajor("MATH 42").isEmpty());

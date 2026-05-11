@@ -1,5 +1,9 @@
 package coursesimplified.service;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import coursesimplified.model.User;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -8,41 +12,33 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import coursesimplified.model.User;
-
+/**
+ * Manages account registration, login state, and user-scoped preferences such
+ * as the last major loaded in the planner.
+ */
 public class UserService {
-    private static final Type USER_MAP_TYPE = new TypeToken<Map<String, User>>() {}.getType();
+    private static final Type USER_MAP_TYPE = new TypeToken<Map<String, User>>() { }.getType();
 
     private final Path filePath;
     private final Gson gson;
     private final Map<String, User> usersById;
+    private final PasswordHasher passwordHasher = new PasswordHasher();
     private User currentUser;
-    private final PasswordHasher passwordHasher;
 
     public UserService(Path filePath) {
         this(filePath, new Gson());
     }
 
     public UserService(Path filePath, Gson gson) {
-        this(filePath, gson, new PasswordHasher());
-    }
-
-    public UserService(Path filePath, Gson gson, PasswordHasher passwordHasher) {
         this.filePath = filePath;
         this.gson = gson;
-        this.passwordHasher = passwordHasher;
         this.usersById = new LinkedHashMap<>();
         load();
     }
 
     public User login(String username, String password) {
         String normalizedUserId = normalizeUsername(username);
-        if (normalizedUserId.isBlank() || password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Username and password are required.");
-        }
+        validateCredentials(normalizedUserId, password);
 
         User user = usersById.get(normalizedUserId);
         if (user == null) {
@@ -58,9 +54,8 @@ public class UserService {
 
     public User register(String username, String password) {
         String normalizedUserId = normalizeUsername(username);
-        if (normalizedUserId.isBlank() || password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Username and password are required.");
-        }
+        validateCredentials(normalizedUserId, password);
+
         if (usersById.containsKey(normalizedUserId)) {
             throw new IllegalArgumentException("That username already exists.");
         }
@@ -76,26 +71,34 @@ public class UserService {
         currentUser = null;
     }
 
-    public String getLastMajorForCurrent() {
-        return currentUser == null ? null : currentUser.getLastMajor();
-    }
-
-    public void setLastMajorForCurrent(String majorName) {
-        if (currentUser == null) return;
-        currentUser.setLastMajor(majorName);
-        save();
-    }
-
-    public User getCurrentUser() {
-        return currentUser;
+    public boolean hasCurrentUser() {
+        return currentUser != null;
     }
 
     public String getCurrentUserId() {
         return currentUser == null ? "" : currentUser.getUserId();
     }
 
-    public boolean hasCurrentUser() {
-        return currentUser != null;
+    public User getCurrentUser() {
+        return currentUser;
+    }
+
+    public String getLastMajorForCurrent() {
+        return currentUser == null ? null : currentUser.getLastMajor();
+    }
+
+    public void setLastMajorForCurrent(String majorName) {
+        if (currentUser == null) {
+            return;
+        }
+        currentUser.setLastMajor(majorName);
+        save();
+    }
+
+    private void validateCredentials(String normalizedUserId, String password) {
+        if (normalizedUserId.isBlank() || password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Username and password are required.");
+        }
     }
 
     private void load() {

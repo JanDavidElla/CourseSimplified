@@ -9,6 +9,7 @@ import coursesimplified.repository.CourseRepository;
 
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Facade service that provides a simplified interface for loading roadmaps,
@@ -60,6 +61,7 @@ public class CourseTreeService {
         }
 
         Course course = requireCourseInCurrentMajor(courseCode);
+        requireCompletedPrerequisites(course, status);
         completionService.updateStatus(course.getCourseCode(), status);
         course.setStatus(status);
         if (status == CourseStatus.Completed) {
@@ -160,5 +162,27 @@ public class CourseTreeService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Course '" + normalizedCourseCode + "' not found in current major."
                 ));
+    }
+
+    private void requireCompletedPrerequisites(Course course, CourseStatus requestedStatus) {
+        if (requestedStatus != CourseStatus.Completed && requestedStatus != CourseStatus.InProgress) {
+            return;
+        }
+
+        String incompletePrerequisites = course.getPrerequisites().stream()
+                .filter(prerequisite -> !prerequisite.isCompleted())
+                .map(Course::getCourseCode)
+                .distinct()
+                .sorted()
+                .collect(Collectors.joining(", "));
+
+        if (!incompletePrerequisites.isEmpty()) {
+            throw new IllegalStateException(
+                    "Cannot mark " + course.getCourseCode()
+                            + " as " + requestedStatus.getDisplayName()
+                            + " until prerequisites are completed: "
+                            + incompletePrerequisites + "."
+            );
+        }
     }
 }

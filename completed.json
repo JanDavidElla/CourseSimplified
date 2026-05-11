@@ -1,12 +1,10 @@
 {
   "jan": {
-    "MATH 30": "Completed",
-    "MATH 31": "Completed"
-  },
-  "root": {
-    "CS 146": "Completed",
+    "CMPE 131": "Completed",
+    "CS 46A": "Completed",
     "CS 46B": "Completed",
     "MATH 30": "Completed",
-    "MATH 42": "Completed"
+    "MATH 31": "Completed",
+    "MATH 32": "Completed"
   }
 }
