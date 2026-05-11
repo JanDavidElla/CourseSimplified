@@ -1,5 +1,9 @@
 package coursesimplified.service;
 
+import java.util.Locale;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import coursesimplified.model.Course;
 import coursesimplified.model.CourseGraph;
 import coursesimplified.model.CourseStatus;
@@ -7,17 +11,11 @@ import coursesimplified.model.Major;
 import coursesimplified.model.MajorType;
 import coursesimplified.repository.CourseRepository;
 
-import java.util.Locale;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 /**
- * Facade service that provides a simplified interface for loading roadmaps,
- * updating course statuses, and retrieving progress data.
- * <p>
- * The GUI and CLI call this class instead of coordinating repository access,
- * course graph updates, completion persistence, and roadmap selection
- * directly.
+ * Main service that loads roadmaps and manages course progress.
+ * 
+ * Everything goes through this - the GUI and CLI don't directly
+ * talk to the repository, completion tracker, etc.
  */
 public class CourseTreeService {
     private final CourseRepository repository;
@@ -30,8 +28,7 @@ public class CourseTreeService {
     }
 
     /**
-     * Loads and selects the roadmap for the requested major, then applies any
-     * persisted course statuses to the in-memory graph used by the UI layers.
+     * Load a major's roadmap and apply saved course statuses to it.
      */
     public Major loadMajor(MajorType type) {
         var graph = repository.loadCourseGraph(type);

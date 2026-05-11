@@ -8,12 +8,10 @@ import coursesimplified.model.CourseGraph;
 import coursesimplified.model.MajorType;
 
 /**
- * Repository for loading course graphs from the API.
+ * Loads course graphs from the API.
  * 
- * This repository coordinates the transformation from API DTOs to domain models,
- * delegating to specialized components:
- * - CourseDetailFetcher: Handles API calls and detail enrichment
- * - CourseGraphBuilder: Transforms DTOs to CourseGraph
+ * Caches results so we don't hammer the API with the same request twice.
+ * Delegates the real work to CourseDetailFetcher and CourseGraphBuilder.
  */
 public class ApiCourseRepository implements CourseRepository {
     private final CourseApiClient client;
@@ -27,8 +25,14 @@ public class ApiCourseRepository implements CourseRepository {
         this.graphBuilder = new CourseGraphBuilder(detailFetcher);
     }
 
+    /**
+     * Load a course graph. If already loaded, return the cached version.
+     */
     @Override
     public CourseGraph loadCourseGraph(MajorType major) {
-        return cache.computeIfAbsent(major, m -> graphBuilder.buildGraph(m, client.fetchCourseTree(m.getPoid())));
+        // Check cache first. If not there, fetch from API and cache it.
+        return cache.computeIfAbsent(major, m -> 
+            graphBuilder.buildGraph(m, client.fetchCourseTree(m.getPoid()))
+        );
     }
 }

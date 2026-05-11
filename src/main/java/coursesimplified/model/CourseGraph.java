@@ -8,6 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * A graph of all courses in a major with prerequisite relationships.
+ * 
+ * Can't modify courses/edges directly - gotta use addCourse() and addEdge().
+ * This keeps the graph from getting messed up.
+ */
 public class CourseGraph {
     private final MajorType majorType;
     private final Map<String, Course> coursesByCourseCode;
@@ -33,8 +39,12 @@ public class CourseGraph {
         return Optional.ofNullable(coursesByCourseCode.get(courseCode));
     }
 
+    /**
+     * Get all courses (read-only).
+     * Can iterate but can't add/remove.
+     */
     public Collection<Course> getAllCourses() {
-        return Collections.unmodifiableCollection(coursesByCourseCode.values()); //doesn't return a copy, but prevents external modification (courseGraph.getAllCourses().add())
+        return Collections.unmodifiableCollection(coursesByCourseCode.values());
     }
 
     public List<Course> getRootCourses() {
@@ -43,6 +53,9 @@ public class CourseGraph {
                 .toList();
     }
 
+    /**
+     * Get all prerequisite relationships (read-only).
+     */
     public List<CourseEdge> getEdges() {
         return Collections.unmodifiableList(edges);
     }

@@ -14,14 +14,13 @@ import com.google.gson.JsonObject;
 import coursesimplified.model.CourseStatus;
 
 /**
- * Handles loading course completion statuses from JSON files with support
- * for multiple legacy formats.
+ * Loads course statuses from a JSON file.
  * 
- * This class encapsulates format detection and parsing logic, supporting:
- * - Legacy array format: ["CS101", "CS102"]
- * - Legacy object with "completed" field: {"completed": ["CS101", "CS102"]}
- * - Nested by user: {"user1": {"CS101": "Completed", ...}, "user2": {...}}
- * - Flat format: {"CS101": "Completed", "CS102": "InProgress"}
+ * Supports 4 old JSON formats (for backward compatibility):
+ * - [\"CS101\", \"CS102\"]
+ * - {\"completed\": [\"CS101\", \"CS102\"]}
+ * - {\"user1\": {\"CS101\": \"Completed\"}, ...}
+ * - {\"CS101\": \"Completed\", ...}
  */
 public class CourseStatusLoader {
     private final Gson gson;
@@ -31,11 +30,7 @@ public class CourseStatusLoader {
     }
 
     /**
-     * Load statuses from a JSON file, auto-detecting the format.
-     * Returns a map of userId → courseCode → CourseStatus.
-     * 
-     * @param filePath the path to the JSON file
-     * @return a map of user IDs to their course statuses
+     * Load from JSON file. Auto-detects old formats (for backward compat).
      */
     public Map<String, Map<String, CourseStatus>> loadFromFile(Path filePath) {
         Map<String, Map<String, CourseStatus>> statusesByUserId = new LinkedHashMap<>();
@@ -62,7 +57,8 @@ public class CourseStatusLoader {
 
     private void loadFromJsonElement(JsonElement root, Map<String, Map<String, CourseStatus>> statusesByUserId) {
         if (root.isJsonArray()) {
-            // Legacy format: ["CS101", "CS102"]
+            // FORMAT 1: Legacy array format - ["CS101", "CS102"]
+            // All courses treated as Completed, stored under default user "cli"
             loadLegacyCompletedArray(statusesByUserId, root.getAsJsonArray());
             return;
         }
@@ -70,19 +66,26 @@ public class CourseStatusLoader {
         if (root.isJsonObject()) {
             JsonObject object = root.getAsJsonObject();
             
-            // Preserve compatibility with original completed-only JSON shape
+            // FORMAT 2: Legacy object with "completed" field
+            // Example: {"completed": ["CS101", "CS102"]}
+            // All courses treated as Completed, stored under default user "cli"
             if (object.has("completed") && object.get("completed").isJsonArray()) {
                 loadLegacyCompletedArray(statusesByUserId, object.getAsJsonArray("completed"));
                 return;
             }
 
-            // Detect if nested by user or flat
+            // Distinguish between nested-by-user vs flat format by checking if
+            // any values are objects (nested) vs strings (flat)
             boolean looksNestedByUser = object.entrySet().stream()
                     .anyMatch(entry -> entry.getValue() != null && entry.getValue().isJsonObject());
 
             if (looksNestedByUser) {
+                // FORMAT 3: Nested by user - {"user1": {...}, "user2": {...}}
+                // Different users with their own course status maps
                 loadNestedStatuses(object, statusesByUserId);
             } else {
+                // FORMAT 4: Flat format - {"CS101": "Completed", "CS102": "InProgress"}
+                // Single user (defaults to "cli") with multiple courses
                 loadFlatStatuses(statusesByUserId, object, "cli");
             }
         }

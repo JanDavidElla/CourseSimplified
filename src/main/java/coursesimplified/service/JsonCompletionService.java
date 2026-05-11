@@ -13,23 +13,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 import coursesimplified.model.CourseStatus;
 
 /**
- * Manages course completion status persistence using JSON files.
+ * Saves and loads course completion statuses from a JSON file.
  * 
- * This service coordinates the loading and saving of course statuses,
- * delegating
- * to specialized helpers for format detection, serialization, and
- * normalization.
- * Responsibilities:
- * - Coordinate status management operations
- * - Maintain current user context
- * - Delegate to CourseStatusLoader for loading
- * - Delegate to CourseStatusSerializer for saving
- * - Use CourseStatusNormalizer for consistent normalization
+ * Delegates to CourseStatusLoader (reading), CourseStatusSerializer (writing),
+ * and CourseStatusNormalizer (consistency).
  */
 public class JsonCompletionService implements CompletionService {
     private final Path filePath;
@@ -44,11 +35,14 @@ public class JsonCompletionService implements CompletionService {
     public JsonCompletionService(Path filePath, Gson gson, String userId) {
         this.filePath = filePath;
         this.gson = gson;
-        this.userId = normalizeUserId(userId);
+        this.userId = CourseStatusNormalizer.normalizeUserId(userId);
         this.statusesByUserId = new LinkedHashMap<>();
         load();
     }
 
+    /**
+     * Update a course status. If save fails, undo the change.
+     */
     @Override
     public void updateStatus(String courseCode, CourseStatus status) {
         reloadFromDisk();
@@ -75,6 +69,9 @@ public class JsonCompletionService implements CompletionService {
         }
     }
 
+    /**
+     * Get a course status. Returns Remaining if not tracked.
+     */
     @Override
     public CourseStatus getStatus(String courseCode) {
         return currentStatuses().getOrDefault(normalizeCourseCode(courseCode), CourseStatus.Remaining);
@@ -107,7 +104,7 @@ public class JsonCompletionService implements CompletionService {
 
             if (root.isJsonObject()) {
                 JsonObject object = root.getAsJsonObject();
-                // Preserve compatibility with the original completed-only JSON shape.
+                // Old JSON format: {\"completed\": [\"CS101\", \"CS102\"]}
                 if (object.has("completed") && object.get("completed").isJsonArray()) {
                     loadLegacyCompletedArray(currentStatuses(), object.getAsJsonArray("completed"));
                     return;
@@ -134,7 +131,7 @@ public class JsonCompletionService implements CompletionService {
 
     private void save() {
         try {
-            // Keep the file compact by omitting Remaining courses from persisted data.
+            // Don't save courses with status Remaining to keep file small
             Map<String, Map<String, String>> serializedStatuses = new TreeMap<>();
             for (Map.Entry<String, Map<String, CourseStatus>> userEntry : statusesByUserId.entrySet()) {
                 Map<String, String> serializedUserStatuses = new TreeMap<>();

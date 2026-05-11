@@ -5,10 +5,10 @@ import coursesimplified.api.CourseApiClient;
 import coursesimplified.api.dto.CourseDetailDto;
 
 /**
- * Handles fetching and processing detailed course information from the API.
+ * Fetches course info from the API.
  * 
- * This class encapsulates the logic for retrieving course details with fallback handling.
- * If a detail fetch fails, the course is still usable with minimal information.
+ * If the API call fails, just uses the course code as the name.
+ * Keeps API stuff separated from the rest of the code.
  */
 public class CourseDetailFetcher {
     private final CourseApiClient client;
@@ -18,10 +18,7 @@ public class CourseDetailFetcher {
     }
 
     /**
-     * Fetch course details, with fallback behavior if fetch fails.
-     * 
-     * @param courseCode the course code to fetch details for
-     * @return a tuple of (courseName, units), using defaults if fetch fails
+     * Fetch course details. If API fails, just use the course code.
      */
     public CourseDetailInfo fetchDetails(String courseCode) {
         try {

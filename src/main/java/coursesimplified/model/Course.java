@@ -59,12 +59,11 @@ public class Course {
     }
 
     /**
-     * Add a prerequisite course to this course.
-     * Used during graph construction to establish prerequisite relationships.
-     * 
-     * @param prerequisite the prerequisite course to add
+     * Add a prerequisite to this course (used during graph setup).
+     * Won't add duplicates.
      */
     public void addPrerequisite(Course prerequisite) {
+        // Don't add the same prerequisite twice
         if (!prerequisites.contains(prerequisite)) {
             prerequisites.add(prerequisite);
         }

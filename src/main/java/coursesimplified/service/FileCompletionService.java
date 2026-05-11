@@ -1,7 +1,5 @@
 package coursesimplified.service;
 
-import coursesimplified.model.CourseStatus;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +9,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import coursesimplified.model.CourseStatus;
+
+/**
+ * Tracks completed courses by reading from a plain text file (one course code per line).
+ * Simple alternative to JSON-based tracking.
+ */
 public class FileCompletionService implements CompletionService {
     private final Map<String, CourseStatus> statusesByCode;
 

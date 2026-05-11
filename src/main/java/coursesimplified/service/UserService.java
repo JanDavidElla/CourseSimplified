@@ -1,9 +1,5 @@
 package coursesimplified.service;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import coursesimplified.model.User;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -12,9 +8,13 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import coursesimplified.model.User;
+
 /**
- * Manages account registration, login state, and user-scoped preferences such
- * as the last major loaded in the planner.
+ * Handles user login, registration, and storing which major they were last viewing.
  */
 public class UserService {
     private static final Type USER_MAP_TYPE = new TypeToken<Map<String, User>>() { }.getType();

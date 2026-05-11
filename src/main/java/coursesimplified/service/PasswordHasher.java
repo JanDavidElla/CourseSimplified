@@ -1,18 +1,18 @@
 package coursesimplified.service;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+
 /**
- * Hashes and verifies user passwords with PBKDF2 and a per-password salt.
+ * Hashes passwords securely with PBKDF2.
  */
 public class PasswordHasher {
     /**
-     * Returns a storable "salt:hash" string where both values are Base64
-     * encoded.
+     * Hash a password and return salt:hash format (Base64 encoded).
      */
     public String storableHashObject(String plainTextPassword) {
         try {

@@ -1,5 +1,8 @@
 package coursesimplified.model;
 
+/**
+ * List of supported majors with their API IDs and display names.
+ */
 public enum MajorType {
     CS("13772", "Computer Science, BS"),
     SWE("13938", "Software Engineering, BS");

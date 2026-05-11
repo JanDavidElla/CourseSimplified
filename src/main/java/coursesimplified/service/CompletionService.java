@@ -1,11 +1,15 @@
 package coursesimplified.service;
 
-import coursesimplified.model.CourseStatus;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import coursesimplified.model.CourseStatus;
+
+/**
+ * Interface for tracking which courses a user has completed/in-progress.
+ * Can be backed by JSON files, plain text, database, whatever.
+ */
 public interface CompletionService {
     void updateStatus(String courseCode, CourseStatus status);
     CourseStatus getStatus(String courseCode);

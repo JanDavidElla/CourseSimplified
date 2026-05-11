@@ -1,7 +1,8 @@
 package coursesimplified.model;
 
 /**
- * User-facing course workflow states shown in the CLI and JavaFX planner.
+ * Course workflow states: Remaining, In Progress, or Completed.
+ * Shown in the UI with icons.
  */
 public enum CourseStatus {
     Remaining("Remaining", "❌", "[ ]"),

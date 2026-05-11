@@ -11,10 +11,8 @@ import com.google.gson.Gson;
 import coursesimplified.model.CourseStatus;
 
 /**
- * Handles serialization of course completion statuses to JSON files.
- * 
- * Encapsulates the logic for converting in-memory status maps to persisted JSON,
- * using a consistent flat format with nested users.
+ * Saves course statuses to a JSON file.
+ * Takes the in-memory map and writes it out.
  */
 public class CourseStatusSerializer {
     private final Gson gson;
@@ -24,11 +22,7 @@ public class CourseStatusSerializer {
     }
 
     /**
-     * Serialize statuses to a JSON file.
-     * 
-     * @param filePath the path where to write the JSON file
-     * @param statusesByUserId map of userId → (courseCode → CourseStatus)
-     * @throws IllegalStateException if the file cannot be written
+     * Write course statuses to a JSON file.
      */
     public void serializeToFile(Path filePath, Map<String, Map<String, CourseStatus>> statusesByUserId) {
         try {

@@ -13,12 +13,10 @@ import coursesimplified.model.CourseGraph;
 import coursesimplified.model.MajorType;
 
 /**
- * Transforms course data from API DTOs into a CourseGraph domain model.
+ * Builds a graph of courses from API data.
  * 
- * This builder encapsulates the complex logic of:
- * - Creating Course objects from nodes with detailed information
- * - Establishing prerequisite relationships between courses
- * - Building the complete course graph structure
+ * Creates all course objects first, then links them together.
+ * Keeps this separate from API stuff.
  */
 public class CourseGraphBuilder {
     private final CourseDetailFetcher detailFetcher;
@@ -28,33 +26,23 @@ public class CourseGraphBuilder {
     }
 
     /**
-     * Build a CourseGraph from API response data.
-     * 
-     * Process:
-     * 1. Fetch detailed info for each course from the API
-     * 2. Create Course objects with gathered information
-     * 3. Establish prerequisite relationships
-     * 4. Build the complete graph
-     * 
-     * @param major the major type this graph represents
-     * @param treeResponse the API response containing nodes and edges
-     * @return a fully populated CourseGraph
+     * Build graph in 2 steps: create courses first, then link them.
      */
     public CourseGraph buildGraph(MajorType major, CourseTreeResponseDto treeResponse) {
         CourseGraph graph = new CourseGraph(major);
 
-        // Map edge source → targets to know which courses are prerequisites
+        // Figure out which courses need which prerequisites
         Map<String, List<String>> prereqCodesByTarget = buildEdgeMap(treeResponse.edges());
 
-        // Phase 1: Create Course objects with detailed information
+        // Create all course objects
         Map<String, Course> courses = createCourses(treeResponse.nodes(), prereqCodesByTarget);
 
-        // Phase 2: Add courses to graph and establish relationships
+        // Add them to the graph
         for (Course course : courses.values()) {
             graph.addCourse(course);
         }
 
-        // Phase 3: Register edges in the graph
+        // Add the prerequisite relationships
         for (CourseTreeResponseDto.EdgeWrapper edgeWrapper : treeResponse.edges()) {
             CourseEdgeDto edge = edgeWrapper.data();
             graph.addEdge(edge.source(), edge.target());
@@ -64,8 +52,8 @@ public class CourseGraphBuilder {
     }
 
     /**
-     * Build a mapping of target course code → list of prerequisite source codes.
-     * Used to pre-compute prerequisites before creating Course objects.
+     * Pre-compute which courses need which prerequisites.
+     * Makes it faster to look up later.
      */
     private Map<String, List<String>> buildEdgeMap(List<CourseTreeResponseDto.EdgeWrapper> edges) {
         Map<String, List<String>> prereqCodesByTarget = new HashMap<>();
@@ -81,24 +69,22 @@ public class CourseGraphBuilder {
     }
 
     /**
-     * Create all Course objects from node data and detailed information.
-     * 
-     * This uses a two-pass approach:
-     * 1. Build all Course objects (with empty prerequisites initially)
-     * 2. Link prerequisites now that all Course objects exist
+     * Create all courses then link them together.
+     * Can't link them if they don't exist yet, so gotta do it in 2 steps.
      */
     private Map<String, Course> createCourses(List<CourseTreeResponseDto.NodeWrapper> nodes,
                                                Map<String, List<String>> prereqCodesByTarget) {
-        // First pass: Create all Course objects
+        // Step 1: Create all courses
         Map<String, Course> courses = new HashMap<>();
         
         for (CourseTreeResponseDto.NodeWrapper nodeWrapper : nodes) {
             CourseNodeDto node = nodeWrapper.data();
             String courseCode = node.id();
             
-            // Fetch detailed information from API
+            // Get course info from API
             CourseDetailFetcher.CourseDetailInfo detailInfo = detailFetcher.fetchDetails(courseCode);
             
+            // Build course (no prerequisites yet)
             Course course = new Course.Builder()
                     .courseCode(courseCode)
                     .courseName(detailInfo.courseName())
@@ -111,7 +97,7 @@ public class CourseGraphBuilder {
             courses.put(courseCode, course);
         }
 
-        // Second pass: Link prerequisites
+        // Step 2: Link prerequisites together
         for (Map.Entry<String, List<String>> entry : prereqCodesByTarget.entrySet()) {
             String targetCode = entry.getKey();
             List<String> sourceCodes = entry.getValue();
