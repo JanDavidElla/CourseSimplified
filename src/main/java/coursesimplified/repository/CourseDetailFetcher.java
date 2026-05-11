@@ -54,8 +54,8 @@ public class CourseDetailFetcher {
             return courseCode;
         }
         
-        // API uses non-breaking spaces ( ) around the dash separator, not regular spaces
-        String normalized = fullCourseName.replace(' ', ' ');
+        // API sometimes uses non-breaking spaces around the dash separator.
+        String normalized = fullCourseName.replace('\u00A0', ' ');
         int dashIndex = normalized.indexOf(" - ");
         if (dashIndex != -1) {
             return normalized.substring(dashIndex + 3).trim();
